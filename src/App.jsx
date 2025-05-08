@@ -38,10 +38,12 @@ function App() {
 
   return (
     <>
-      <div>{formatTime(elapsedTime)}</div>
+      <div className='timer'>{formatTime(elapsedTime)}</div>
+      <div className='group'>
       <button onClick={startTimer} disabled={isRunning}>Iniciar</button>
       <button onClick={pauseTimer} disabled={!isRunning}>Pausar</button>
       <button onClick={resetTimer}>Resetar</button>
+      </div>
     </>
   );
 }
