@@ -35,8 +35,7 @@ function Home() {
             const LIMITE = 10; // 5 minutos
             if (elapsedTime === LIMITE && Notification.permission === "granted") {
                 new Notification("⏰ Tempo atingido!", {
-                    body: "Seu cronômetro chegou a 5 minutos.",
-                    icon: "../../assets/react.svg" // substitua com o seu ícone PWA
+                    body: "Seu cronômetro chegou a 5 minutos."
                 });
             }
         }, [elapsedTime]);
