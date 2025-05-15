@@ -7,13 +7,49 @@ function Home() {
     const [isRunning, setIsRunning] = useState(false);
     const timerRef = useRef(null);
     const startTimeRef = useRef(null);
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+    }
     
     useEffect(() => {
         if ("Notification" in window && Notification.permission !== "granted") {
             Notification.requestPermission();
         }
     }, []);
-
+    useEffect(() => {
+        const PUBLIC_VAPID_KEY = 'BGVB2PSSt2DefJXoLyNodGPveKYxQ6wuGQuBJkN6xktL3TGt6ZbVGVcsGsTunH5dcOM7C3-OvmzcBaLZyDc9X18';
+    
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.ready.then(async registration => {
+                const subscription = await registration.pushManager.getSubscription();
+                if (!subscription) {
+                    try {
+                        const newSub = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
+                        });
+                        console.log('Inscrito para push:', newSub);
+    
+                        // Envia para o backend
+                        await fetch('http://localhost:4000/subscribe', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(newSub),
+                        });
+                    } catch (err) {
+                        console.error('Erro ao inscrever:', err);
+                    }
+                }
+            });
+        }
+    }, []);
+    
 
     useEffect(() => {
         if (isRunning) {
@@ -32,7 +68,7 @@ function Home() {
 
         // Notificação ao atingir o tempo limite
         useEffect(() => {
-            const LIMITE = 10; // 5 minutos
+            const LIMITE = 10; 
             if (elapsedTime === LIMITE && Notification.permission === "granted") {
                 new Notification("⏰ Tempo atingido!", {
                     body: "Seu cronômetro chegou a 5 minutos."
