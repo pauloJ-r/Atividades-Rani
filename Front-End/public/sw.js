@@ -3,9 +3,10 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/public/icons/icon-192.ico',
-  '/public/icons/icon-512.ico'
+  '/icons/icon-192.ico',
+  '/icons/icon-512.ico'
 ];
+
 
 // Instala o service worker e faz cache dos arquivos
 self.addEventListener('install', event => {
