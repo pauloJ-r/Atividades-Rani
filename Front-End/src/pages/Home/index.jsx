@@ -69,21 +69,21 @@ function Home() {
     useEffect(() => {
         const LIMITE = 10;
     
-        if (elapsedTime === LIMITE && Notification.permission === "granted") {
+        if (elapsedTime === LIMITE) {
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistration().then(reg => {
-                    if (reg) {
-                        reg.showNotification("⏰ Tempo atingido!", {
-                            body: "Seu cronômetro chegou a 10 segundos.",
-                            icon: "/icons/icon-192.ico", // opcional
-                            badge: "/icons/icon-192.ico", // opcional
-                            vibrate: [200, 100, 200],
-                            tag: "timer-notification"
-                        });
-                    }
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification("⏰ Tempo atingido!", {
+                        body: "Seu cronômetro chegou a 10 segundos.",
+                        icon: "/icons/icon-192.ico",
+                        badge: "/icons/icon-192.ico",
+                        vibrate: [200, 100, 200],
+                        tag: "timer-notification"
+                    });
+                }).catch(err => {
+                    console.error("Erro ao exibir notificação:", err);
                 });
-            } else {
-                // Fallback direto
+            } else if (Notification.permission === "granted") {
+                // fallback direto se não houver serviceWorker
                 new Notification("⏰ Tempo atingido!", {
                     body: "Seu cronômetro chegou a 10 segundos."
                 });
