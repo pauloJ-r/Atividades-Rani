@@ -1,21 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import Home from './pages/Home';
-import Header from './components/Header'
+import Header from './components/Header';
 
 function App() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('Service Worker registrado:', reg))
         .catch(err => console.error('Erro ao registrar SW:', err));
-    });
-  }  
+    }
+  }, []);
+
   return (
-      <>
+    <>
       <Header />
-       <Home />
-      </>
-  )
+      <Home />
+    </>
+  );
 }
 
 export default App;
