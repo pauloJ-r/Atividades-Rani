@@ -2,7 +2,7 @@ const CACHE_NAME = 'cronometro-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  './public/manifest.json',
+  '/manifest.json',
   '/public/icons/icon-192.ico',
   '/public/icons/icon-512.ico'
 ];
