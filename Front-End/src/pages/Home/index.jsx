@@ -66,15 +66,31 @@ function Home() {
         return () => clearInterval(timerRef.current);
     }, [isRunning]);
 
-        // Notificação ao atingir o tempo limite
-        useEffect(() => {
-            const LIMITE = 10; 
-            if (elapsedTime === LIMITE && Notification.permission === "granted") {
+    useEffect(() => {
+        const LIMITE = 10;
+    
+        if (elapsedTime === LIMITE && Notification.permission === "granted") {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) {
+                        reg.showNotification("⏰ Tempo atingido!", {
+                            body: "Seu cronômetro chegou a 10 segundos.",
+                            icon: "/icons/icon-192.ico", // opcional
+                            badge: "/icons/icon-192.ico", // opcional
+                            vibrate: [200, 100, 200],
+                            tag: "timer-notification"
+                        });
+                    }
+                });
+            } else {
+                // Fallback direto
                 new Notification("⏰ Tempo atingido!", {
-                    body: "Seu cronômetro chegou a 5 minutos."
+                    body: "Seu cronômetro chegou a 10 segundos."
                 });
             }
-        }, [elapsedTime]);
+        }
+    }, [elapsedTime]);
+    
 
     
 
