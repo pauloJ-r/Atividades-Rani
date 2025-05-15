@@ -35,7 +35,7 @@ function Home() {
                         console.log('Inscrito para push:', newSub);
     
                         // Envia para o backend
-                        await fetch('http://localhost:4000/subscribe', {
+                        await fetch('https://atividades-rani-production.up.railway.app/subscribe', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
