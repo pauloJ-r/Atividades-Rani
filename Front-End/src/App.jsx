@@ -5,7 +5,7 @@ import Header from './components/Header'
 function App() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./public/sw.js')
+      navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('Service Worker registrado:', reg))
         .catch(err => console.error('Erro ao registrar SW:', err));
     });
