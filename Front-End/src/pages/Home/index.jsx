@@ -1,63 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
-import { formatTime } from "../../utils/FormatData"
-import "./index.css"
+import { formatTime } from "../../utils/FormatData";
+import { subscribeToPush } from "../../services/pushService";
+import { sendNotification } from "../../services/notifications";
+import "./index.css";
 
 function Home() {
+    const WORK_DURATION = 25 * 60;
+    const SHORT_BREAK = 5 * 60;
+    const LONG_BREAK = 15 * 60;
+    const CYCLES_BEFORE_LONG_BREAK = 4;
+
     const [elapsedTime, setElapsedTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
+    const [isWorkSession, setIsWorkSession] = useState(true);
+    const [cycleCount, setCycleCount] = useState(0);
+
     const timerRef = useRef(null);
     const startTimeRef = useRef(null);
 
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = atob(base64);
-        return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
-    }
-    
     useEffect(() => {
         if ("Notification" in window && Notification.permission !== "granted") {
             Notification.requestPermission();
         }
+        subscribeToPush();
     }, []);
-    useEffect(() => {
-        const PUBLIC_VAPID_KEY = 'BGVB2PSSt2DefJXoLyNodGPveKYxQ6wuGQuBJkN6xktL3TGt6ZbVGVcsGsTunH5dcOM7C3-OvmzcBaLZyDc9X18';
-    
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.ready.then(async registration => {
-                const subscription = await registration.pushManager.getSubscription();
-                if (!subscription) {
-                    try {
-                        const newSub = await registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
-                        });
-                        console.log('Inscrito para push:', newSub);
-    
-                        // Envia para o backend
-                        await fetch('https://atividades-rani-production.up.railway.app/subscribe', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(newSub),
-                        });
-                    } catch (err) {
-                        console.error('Erro ao inscrever:', err);
-                    }
-                }
-            });
-        }
-    }, []);
-    
 
     useEffect(() => {
         if (isRunning) {
             startTimeRef.current = Date.now() - elapsedTime * 1000;
             timerRef.current = setInterval(() => {
                 const now = Date.now();
-                const seconds = Math.floor((now - startTimeRef.current) / 1000);
-                setElapsedTime(seconds);
+                setElapsedTime(Math.floor((now - startTimeRef.current) / 1000));
             }, 1000);
         } else {
             clearInterval(timerRef.current);
@@ -67,48 +40,45 @@ function Home() {
     }, [isRunning]);
 
     useEffect(() => {
-        const LIMITE = 10;
-    
-        if (elapsedTime === LIMITE) {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification("⏰ Tempo atingido!", {
-                        body: "Seu cronômetro chegou a 10 segundos.",
-                        icon: "/icons/icon-192.ico",
-                        badge: "/icons/icon-192.ico",
-                        vibrate: [200, 100, 200],
-                        tag: "timer-notification"
-                    });
-                }).catch(err => {
-                    console.error("Erro ao exibir notificação:", err);
-                });
-            } else if (Notification.permission === "granted") {
-                // fallback direto se não houver serviceWorker
-                new Notification("⏰ Tempo atingido!", {
-                    body: "Seu cronômetro chegou a 10 segundos."
-                });
+        const duration = isWorkSession
+            ? WORK_DURATION
+            : (cycleCount % CYCLES_BEFORE_LONG_BREAK === 0 ? LONG_BREAK : SHORT_BREAK);
+
+        if (elapsedTime >= duration) {
+            sendNotification(isWorkSession);
+            setIsRunning(false);
+            setElapsedTime(0);
+
+            if (isWorkSession) {
+                setCycleCount(prev => prev + 1);
             }
+
+            setIsWorkSession(prev => !prev);
         }
     }, [elapsedTime]);
-    
 
-    
+    const totalDuration = isWorkSession
+        ? WORK_DURATION
+        : (cycleCount % CYCLES_BEFORE_LONG_BREAK === 0 ? LONG_BREAK : SHORT_BREAK);
 
-    const startTimer = () => setIsRunning(true);
-    const pauseTimer = () => setIsRunning(false);
-    const resetTimer = () => {
-        setIsRunning(false);
-        setElapsedTime(0);
-    };
+    const timeLeft = totalDuration - elapsedTime;
 
     return (
         <>
-            <div className='timer'>{formatTime(elapsedTime)}</div>
-            <div className='group'>
-                <button onClick={startTimer} disabled={isRunning}>Iniciar</button>
-                <button onClick={pauseTimer} disabled={!isRunning}>Pausar</button>
-                <button onClick={resetTimer}>Resetar</button>
+            <div className='timer'>
+                {isWorkSession ? "⏱️ Foco" : "🛋️ Pausa"} - {formatTime(timeLeft)}
             </div>
+            <div className='group'>
+                <button onClick={() => setIsRunning(true)} disabled={isRunning}>Iniciar</button>
+                <button onClick={() => setIsRunning(false)} disabled={!isRunning}>Pausar</button>
+                <button onClick={() => {
+                    setIsRunning(false);
+                    setElapsedTime(0);
+                    setIsWorkSession(true);
+                    setCycleCount(0);
+                }}>Resetar</button>
+            </div>
+            <div className="cycles">Ciclos completos: {cycleCount}</div>
         </>
     );
 }
